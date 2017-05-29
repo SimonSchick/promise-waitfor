@@ -21,5 +21,5 @@ declare namespace promise_waitfor {
 	 * @param  {Function} Promise The promise constructor.
 	 * @return {Function} Returns the bound waitFor function.
 	 */
-    function use<T>(promise: typeof Promise): (condition: () => T | Falsy, interval?: number) => Promise<T>;
+	 function use(promise: PromiseConstructor): typeof promise_waitfor;
 }
