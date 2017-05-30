@@ -4,6 +4,7 @@ import * as waitFor from './index.js';
 
 // 1) Defaults to the native promise implementation
 const nativePromise = waitFor(() => true);
+nativePromise.then((v) => {}).catch((e) => {});
 
 // 2) Correctly makes the function use the given promise implementation
 class OtherPromise<T> extends Promise<T> {
@@ -16,11 +17,27 @@ class OtherPromise<T> extends Promise<T> {
 	extendedPromiseFeature() {}
 }
 
-const otherWaitFor = waitFor.use(OtherPromise);
-const otherPromise = otherWaitFor(() => true);
+// various overload uses
+const otherWaitForSimple = waitFor.use(OtherPromise);
+const otherWaitForExact = waitFor.use<OtherPromise<any>>(OtherPromise);
+const otherWaitForSimpleDogs = waitFor.use<Dog>(OtherPromise);
+const otherWaitForExactDogs = waitFor.use<OtherPromise<Dog>>(OtherPromise);
 
-// Known limitation - we return an object of type Promise<any>, not OtherPromise<any>
-// otherPromise.extendedPromiseFeature();
+// To workaround some TypeScript limitations, consumer may need a wrapper to reclaim genericity
+// See https://github.com/Microsoft/TypeScript/issues/9949
+function otherWaitForGeneric<T>(condition: () => T | waitFor.Falsy, interval?: number): OtherPromise<T> {
+	return otherWaitForExact(condition, interval);
+}
+
+const otherPromise = otherWaitForExact(() => true);
+otherPromise.then((v) => {}).catch((e) => {});
+
+const otherPromiseGeneric = otherWaitForGeneric(() => true);
+otherPromiseGeneric.then((v) => {}).catch((e) => {});
+
+// Can use extended OtherPromise features
+otherPromise.extendedPromiseFeature();
+otherPromiseGeneric.extendedPromiseFeature();
 
 // 3) Correctly types an arbitrary class we are waiting for
 class Dog {
@@ -34,23 +51,26 @@ nativeDogPromise.then((dog2) => {
 });
 
 // 4) Dog test also works with non-native promise
-const otherDogPromise1 = otherWaitFor(() => dog1);
+// But have to either explicitly specify Dog type or use generic wrapper
+const otherDogPromise1 = otherWaitForSimple(() => dog1);
 
 otherDogPromise1.then((dog2: Dog) => {
 	dog2.woof();
 });
 
-const otherDogPromise2: Promise<Dog> = otherWaitFor(() => dog1);
+const otherDogPromise2: OtherPromise<Dog> = otherWaitForExact(() => dog1);
 otherDogPromise2.then((dog2) => {
 	dog2.woof();
 });
 
-const otherDogPromise3: Promise<Dog> = otherWaitFor(() => dog1);
+const otherDogPromise3 = otherWaitForGeneric(() => dog1);
 otherDogPromise3.then((dog2) => {
-	// Known limitation in TypeScript 2.3
-	// With non-native promise currently have to specify the type somewhere
-	// See https://github.com/Microsoft/TypeScript/issues/9949
-	// dog2.woof();
+	dog2.woof();
+});
+
+const otherDogPromise4 = otherWaitForSimpleDogs(() => dog1);
+otherDogPromise4.then((dog2) => {
+	dog2.woof();
 });
 
 dog1 = new Dog();
