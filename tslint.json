@@ -1,0 +1,7 @@
+{ 
+	"extends": "dtslint/dtslint.json",
+	"rules": {
+		// not relevant for in-package type-test
+		"no-relative-import-in-test": false
+	}
+}

@@ -1,0 +1,4 @@
+
+# Declare files that will always have LF line endings on checkout.
+# Required due to eslint linebreak-style when working with repo on Windows
+*.js text eol=lf
